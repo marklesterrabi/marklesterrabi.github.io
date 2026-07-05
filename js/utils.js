@@ -49,7 +49,7 @@ function logout() {
 }
 
 // ================================================
-// IMPROVED CNN CLASSIFICATION FOR 3 VARIETIES
+// CNN CLASSIFICATION FOR 3 VARIETIES
 // ================================================
 
 function mockCNNClassification(imageDataURL) {
@@ -90,80 +90,47 @@ function mockCNNClassification(imageDataURL) {
 }
 
 // ================================================
-// ADVANCED FEATURE EXTRACTION
+// FEATURE EXTRACTION
 // ================================================
 
 function extractImageFeatures(imageDataURL) {
-    // Extract more detailed features from the image data
+    // Create a hash from the image data
     let hash = 0;
-    const dataString = imageDataURL.substring(0, 3000);
+    const dataString = imageDataURL.substring(0, 2000);
     
     for (let i = 0; i < dataString.length; i++) {
         hash = ((hash << 5) - hash) + dataString.charCodeAt(i);
         hash = hash & hash;
     }
     
-    // Create a more detailed feature set
+    // Simulate extracting visual features
     const features = {
-        // Color features - using different parts of the hash
-        colorR: Math.abs(hash % 256),
-        colorG: Math.abs((hash >> 4) % 256),
-        colorB: Math.abs((hash >> 8) % 256),
-        
-        // Enhanced color analysis
-        brightness: Math.abs((hash % 200) / 200),
-        saturation: 0.3 + (Math.abs((hash >> 3) % 140) / 200),
-        hue: Math.abs((hash >> 6) % 360),
-        
-        // Texture features
+        colorR: Math.abs(hash % 255),
+        colorG: Math.abs((hash >> 8) % 255),
+        colorB: Math.abs((hash >> 16) % 255),
         textureScore: Math.abs((hash % 100) / 100),
-        smoothness: 0.3 + (Math.abs((hash >> 4) % 70) / 100),
-        roughness: Math.abs((hash >> 8) % 100) / 100,
-        
-        // Shape features
-        roundness: 0.5 + (Math.abs(hash % 50) / 100),
-        sizeScore: 0.4 + (Math.abs((hash >> 2) % 60) / 100),
-        elongation: 0.2 + (Math.abs((hash >> 5) % 80) / 100),
-        
-        // Pattern features
+        smoothness: Math.abs(((hash >> 4) % 100) / 100),
+        roundness: 0.7 + (Math.abs(hash % 30) / 100),
+        sizeScore: 0.6 + (Math.abs((hash >> 2) % 40) / 100),
         patternDensity: Math.abs((hash % 100) / 100),
-        translucency: 0.2 + (Math.abs((hash >> 4) % 80) / 100),
-        opacity: 0.2 + (Math.abs((hash >> 8) % 80) / 100),
-        
-        // Surface features
-        surfaceDefects: Math.abs((hash >> 10) % 100) / 100,
-        uniformity: 0.4 + (Math.abs((hash >> 12) % 60) / 100),
-        
-        // Additional color characteristics
-        warmth: 0.3 + (Math.abs((hash >> 14) % 70) / 100),
-        coolness: 0.3 + (Math.abs((hash >> 16) % 70) / 100),
-        
-        // Image complexity
-        imageComplexity: Math.min(1, (imageDataURL.length % 1000) / 1000),
-        colorVariance: 0.2 + (Math.abs((hash >> 20) % 80) / 100),
-        
-        // Raw hash for consistency
+        translucency: Math.abs(((hash >> 6) % 100) / 100),
+        surfaceDefects: Math.abs(((hash >> 10) % 100) / 100),
+        uniformity: 0.5 + (Math.abs(((hash >> 12) % 50)) / 100),
         hash: Math.abs(hash)
     };
     
-    // Calculate additional derived features
-    features.avgColor = (features.colorR + features.colorG + features.colorB) / 3;
-    features.colorContrast = Math.abs(features.colorR - features.colorB) + Math.abs(features.colorG - features.colorB);
-    features.goldenRatio = features.colorR > 180 && features.colorG > 150 && features.colorB < 120;
-    features.creamyRatio = features.colorR > 200 && features.colorG > 190 && features.colorB < 180;
-    features.deepYellowRatio = features.colorR > 170 && features.colorG > 150 && features.colorB > 80 && features.colorB < 150;
+    features.imageComplexity = Math.min(1, (imageDataURL.length % 1000) / 1000);
+    features.colorVariance = 0.3 + (Math.abs((hash >> 20) % 70) / 100);
     
     return features;
 }
 
 // ================================================
-// ENHANCED VARIETY DETECTION
+// IMPROVED VARIETY DETECTION - COLOR PRIORITY
 // ================================================
 
 function determineVariety(features) {
     const hash = features.hash;
-    
-    // Extract key features
     const colorR = features.colorR;
     const colorG = features.colorG;
     const colorB = features.colorB;
@@ -171,162 +138,176 @@ function determineVariety(features) {
     const translucency = features.translucency;
     const patternDensity = features.patternDensity;
     const smoothness = features.smoothness;
-    const uniformity = features.uniformity;
-    const brightness = features.brightness;
-    const saturation = features.saturation;
-    const warmth = features.warmth;
-    const opacity = features.opacity;
     
-    // ============================
-    // WAXY CORN DETECTION
-    // Pale/cream color, waxy appearance, translucent
-    // ============================
+    // ================================================
+    // COLOR-BASED DETECTION (PRIMARY)
+    // ================================================
+    
+    // Calculate color characteristics
+    const isLightColor = (colorR > 200 && colorG > 190 && colorB > 180);
+    const isWhiteColor = (colorR > 210 && colorG > 200 && colorB > 190);
+    const isYellowColor = (colorR > 200 && colorG > 150 && colorB < 120);
+    const isGoldenColor = (colorR > 180 && colorG > 160 && colorB > 80 && colorB < 150);
+    const isOrangeColor = (colorR > 200 && colorG > 130 && colorB < 100);
+    
+    // Calculate color variance
+    const colorVariance = Math.abs(colorR - colorG) + Math.abs(colorG - colorB) + Math.abs(colorR - colorB);
+    
+    // ================================================
+    // WAXY CORN DETECTION (WHITE/PALE COLOR)
+    // ================================================
+    
     let waxyScore = 0;
     
-    // Color: Pale/cream (high R, high G, low B)
-    if (colorR > 200) waxyScore += 10;
-    if (colorG > 180) waxyScore += 8;
-    if (colorB < 200) waxyScore += 8;
-    if (colorR > colorG && colorG > colorB) waxyScore += 5;
+    // PRIMARY: Color-based detection for Waxy Corn
+    // Waxy Corn is characterized by white to pale yellow/cream color
+    if (isWhiteColor || isLightColor) {
+        waxyScore += 40;  // Strong weight for white/light color
+    }
     
-    // Waxy appearance: Translucent, smooth
-    if (translucency > 0.5) waxyScore += 12;
-    if (smoothness > 0.6) waxyScore += 8;
-    if (opacity < 0.6) waxyScore += 8;
+    // Waxy Corn has pale/cream color (high R, high G, high B)
+    if (colorR > 190 && colorG > 180 && colorB > 170) {
+        waxyScore += 25;
+    }
     
-    // Pattern: Even, uniform
-    if (patternDensity < 0.4) waxyScore += 10;
-    if (uniformity > 0.6) waxyScore += 8;
-    if (textureScore < 0.6) waxyScore += 5;
+    // Waxy Corn has low color saturation (colors are close to each other)
+    if (colorVariance < 50) {
+        waxyScore += 20;
+    }
     
-    // Temperature: Cool/neutral
-    if (warmth < 0.6) waxyScore += 5;
-    if (saturation < 0.5) waxyScore += 8;
-    if (brightness > 0.5) waxyScore += 5;
+    // Waxy Corn is translucent/pearlescent
+    if (translucency > 0.5) {
+        waxyScore += 15;
+    }
     
-    // Special: Creamy ratio
-    if (features.creamyRatio) waxyScore += 15;
-    if (features.goldenRatio === false) waxyScore += 10;
+    // Waxy Corn has smooth texture
+    if (smoothness > 0.6) {
+        waxyScore += 10;
+    }
     
-    // ============================
-    // SWEET CORN DETECTION
-    // Golden yellow, plump, bright
-    // ============================
+    // Waxy Corn has uniform appearance
+    if (features.uniformity > 0.6) {
+        waxyScore += 10;
+    }
+    
+    // ================================================
+    // SWEET CORN DETECTION (GOLDEN/YELLOW)
+    // ================================================
+    
     let sweetScore = 0;
     
-    // Color: Golden yellow (high R, high G, low B)
-    if (colorR > 200) sweetScore += 10;
-    if (colorG > 150) sweetScore += 10;
-    if (colorB < 120) sweetScore += 8;
-    if (colorR > colorG && colorG > colorB) sweetScore += 5;
+    // PRIMARY: Sweet Corn is characterized by bright golden-yellow color
+    if (isYellowColor || isGoldenColor) {
+        sweetScore += 35;
+    }
     
-    // Sweet appearance: Bright, plump
-    if (translucency > 0.3 && translucency < 0.6) sweetScore += 8;
-    if (smoothness > 0.5) sweetScore += 8;
-    if (brightness > 0.4) sweetScore += 10;
-    if (saturation > 0.4) sweetScore += 8;
+    // Sweet Corn has high R, high G, low B (golden)
+    if (colorR > 190 && colorG > 140 && colorB < 130) {
+        sweetScore += 25;
+    }
     
-    // Pattern: Moderate density
-    if (patternDensity > 0.2 && patternDensity < 0.6) sweetScore += 10;
-    if (uniformity > 0.5) sweetScore += 8;
-    if (textureScore > 0.3 && textureScore < 0.7) sweetScore += 5;
+    // Sweet Corn has vibrant color with some saturation
+    if (colorVariance > 50 && colorVariance < 150) {
+        sweetScore += 15;
+    }
     
-    // Temperature: Warm
-    if (warmth > 0.5) sweetScore += 8;
-    if (warmth > 0.6) sweetScore += 5;
-    if (saturation > 0.4) sweetScore += 5;
+    // Sweet Corn has smooth texture
+    if (smoothness > 0.5) {
+        sweetScore += 10;
+    }
     
-    // Special: Golden ratio
-    if (features.goldenRatio) sweetScore += 20;
-    if (features.creamyRatio === false) sweetScore += 10;
-    if (features.deepYellowRatio) sweetScore += 12;
+    // Sweet Corn has moderate translucency
+    if (translucency > 0.3 && translucency < 0.7) {
+        sweetScore += 10;
+    }
     
-    // ============================
-    // HYBRID YELLOW DETECTION
-    // Deep yellow/orange, opaque, robust
-    // ============================
+    // ================================================
+    // HYBRID YELLOW DETECTION (DEEP YELLOW/ORANGE)
+    // ================================================
+    
     let hybridScore = 0;
     
-    // Color: Deep yellow/orange (high R, high G, medium B)
-    if (colorR > 170) hybridScore += 10;
-    if (colorG > 150) hybridScore += 8;
-    if (colorB > 80 && colorB < 150) hybridScore += 10;
-    if (colorR > colorG && colorG < colorB) hybridScore += 5;
+    // PRIMARY: Hybrid Yellow is characterized by deep yellow/orange color
+    if (isOrangeColor || (colorR > 170 && colorG > 140 && colorB > 60 && colorB < 130)) {
+        hybridScore += 30;
+    }
     
-    // Hybrid appearance: Opaque, dense
-    if (opacity > 0.4) hybridScore += 12;
-    if (translucency < 0.5) hybridScore += 8;
-    if (smoothness > 0.4 && smoothness < 0.7) hybridScore += 8;
+    // Hybrid Yellow has high R, high G, medium B (deep yellow)
+    if (colorR > 170 && colorG > 140 && colorB > 60 && colorB < 130) {
+        hybridScore += 25;
+    }
     
-    // Pattern: Dense, uniform
-    if (patternDensity > 0.4) hybridScore += 10;
-    if (uniformity > 0.6) hybridScore += 12;
-    if (textureScore > 0.4) hybridScore += 5;
+    // Hybrid Yellow has moderate color variation
+    if (colorVariance > 30 && colorVariance < 120) {
+        hybridScore += 15;
+    }
     
-    // Temperature: Warm
-    if (warmth > 0.4) hybridScore += 8;
-    if (saturation > 0.3) hybridScore += 8;
-    if (brightness > 0.3 && brightness < 0.7) hybridScore += 5;
+    // Hybrid Yellow is more opaque
+    if (translucency < 0.4) {
+        hybridScore += 15;
+    }
     
-    // Special: Deep yellow ratio
-    if (features.deepYellowRatio) hybridScore += 18;
-    if (features.goldenRatio && features.creamyRatio === false) hybridScore += 12;
+    // Hybrid Yellow has higher pattern density
+    if (patternDensity > 0.4) {
+        hybridScore += 10;
+    }
     
-    // ============================
-    // ADD HASH-BASED VARIATION (for different images)
-    // ============================
-    const randomFactor1 = (hash % 30) / 100;
-    const randomFactor2 = ((hash >> 3) % 30) / 100;
-    const randomFactor3 = ((hash >> 6) % 30) / 100;
+    // ================================================
+    // LOGIC TO PREVENT FALSE POSITIVES
+    // ================================================
     
-    waxyScore += randomFactor1 * 5;
-    sweetScore += randomFactor2 * 5;
-    hybridScore += randomFactor3 * 5;
+    // If the image is clearly white/light, it MUST be Waxy Corn
+    if (isWhiteColor || (colorR > 210 && colorG > 200 && colorB > 190)) {
+        waxyScore += 30; // Boost Waxy score to ensure it wins
+    }
     
-    // ============================
-    // LOG SCORES FOR DEBUGGING
-    // ============================
-    console.log('=== Variety Detection Scores ===');
-    console.log('Waxy Corn Score:', waxyScore);
-    console.log('Sweet Corn Score:', sweetScore);
-    console.log('Hybrid Yellow Score:', hybridScore);
-    console.log('Features:', {
-        colorR, colorG, colorB,
-        translucency, smoothness, patternDensity,
-        uniformity, brightness, saturation,
-        creamyRatio: features.creamyRatio,
-        goldenRatio: features.goldenRatio,
-        deepYellowRatio: features.deepYellowRatio
-    });
-    console.log('===============================');
+    // If the image is clearly golden/yellow, it's likely Sweet Corn
+    if (isYellowColor && colorR > 200 && colorG > 160 && colorB < 120) {
+        sweetScore += 15;
+    }
     
-    // ============================
+    // If the image is clearly deep yellow/orange, it's likely Hybrid Yellow
+    if (isOrangeColor && colorR > 180 && colorG > 140 && colorB > 70 && colorB < 130) {
+        hybridScore += 15;
+    }
+    
+    // ================================================
     // DETERMINE WINNER
-    // ============================
-    let variety = 'Waxy Corn';
-    let maxScore = waxyScore;
+    // ================================================
     
-    if (sweetScore > maxScore) {
-        variety = 'Sweet Corn';
-        maxScore = sweetScore;
+    let variety = 'Sweet Corn';
+    let maxScore = sweetScore;
+    
+    if (waxyScore > maxScore) {
+        variety = 'Waxy Corn';
+        maxScore = waxyScore;
     }
     if (hybridScore > maxScore) {
         variety = 'Hybrid Yellow';
         maxScore = hybridScore;
     }
     
-    // If scores are very close, use hash to break ties
+    // ================================================
+    // SAFETY CHECK - Prevent misclassification of white images
+    // ================================================
+    
+    // If all scores are very close and the image is white, force Waxy Corn
     const scoreDiff = Math.max(waxyScore, sweetScore, hybridScore) - Math.min(waxyScore, sweetScore, hybridScore);
-    if (scoreDiff < 8) {
-        const tieBreaker = hash % 3;
-        if (tieBreaker === 0) variety = 'Waxy Corn';
-        else if (tieBreaker === 1) variety = 'Sweet Corn';
-        else variety = 'Hybrid Yellow';
-        console.log('Tie break applied, selected:', variety);
+    if (scoreDiff < 20 && (isWhiteColor || isLightColor)) {
+        variety = 'Waxy Corn';
+    }
+    
+    // If all scores are low, default to Waxy Corn if image is light
+    if (maxScore < 30 && (isWhiteColor || isLightColor)) {
+        variety = 'Waxy Corn';
     }
     
     return variety;
 }
+
+// ================================================
+// QUALITY DETECTION
+// ================================================
 
 function determineQuality(features) {
     const hash = features.hash;
@@ -390,16 +371,10 @@ function calculateMarketValue(variety, quality) {
 
 function detectDisease(features) {
     const diseaseScore = features.surfaceDefects * 100;
-    
-    if (diseaseScore < 20) {
-        return 'None detected';
-    } else if (diseaseScore < 40) {
-        return 'Minor surface blemishes';
-    } else if (diseaseScore < 60) {
-        return 'Potential fungal spots';
-    } else {
-        return 'Insect damage visible';
-    }
+    if (diseaseScore < 20) return 'None detected';
+    else if (diseaseScore < 40) return 'Minor surface blemishes';
+    else if (diseaseScore < 60) return 'Potential fungal spots';
+    else return 'Insect damage visible';
 }
 
 function getVarietyTraits(variety) {
