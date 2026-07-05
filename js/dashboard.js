@@ -40,9 +40,9 @@ function loadDashboard() {
 
 function updateVarietyChart(history) {
     const varietyCounts = {
+        'Waxy Corn': 0,
         'Sweet Corn': 0,
-        'Flour Corn': 0,
-        'Waxy Corn': 0
+        'Hybrid Yellow': 0
     };
     
     history.forEach(item => {
@@ -60,10 +60,10 @@ function updateVarietyChart(history) {
     varietyChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Sweet Corn', 'Flour Corn', 'Waxy Corn'],
+            labels: ['Waxy Corn', 'Sweet Corn', 'Hybrid Yellow'],
             datasets: [{
-                data: [varietyCounts['Sweet Corn'], varietyCounts['Flour Corn'], varietyCounts['Waxy Corn']],
-                backgroundColor: ['#f39c12', '#f5e6ca', '#27ae60'],
+                data: [varietyCounts['Waxy Corn'], varietyCounts['Sweet Corn'], varietyCounts['Hybrid Yellow']],
+                backgroundColor: ['#e8dcc8', '#f39c12', '#d4a017'],  // Waxy: cream, Sweet: golden, Hybrid: deep yellow
                 borderWidth: 0
             }]
         },
@@ -72,11 +72,23 @@ function updateVarietyChart(history) {
             plugins: {
                 legend: {
                     position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
                 }
             }
         }
     });
 }
+
 
 function updateQualityTrendChart(history) {
     // Group by date
