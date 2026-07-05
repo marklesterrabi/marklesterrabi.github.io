@@ -56,7 +56,8 @@ function logout() {
 }
 
 // Mock CNN Classification - Only 3 varieties: Waxy Corn, Sweet Corn, Hybrid Yellow
-function mockCNNClassification(imageDataURL) {
+// This function now allows you to control which variety gets returned
+function mockCNNClassification(imageDataURL, forceVariety = null) {
     // Simulate AI processing with consistent results based on image data
     let hash = 0;
     if (imageDataURL) {
@@ -72,14 +73,25 @@ function mockCNNClassification(imageDataURL) {
     const varieties = ["Waxy Corn", "Sweet Corn", "Hybrid Yellow"];
     const qualities = ["High Quality", "Moderate Quality", "Low Quality"];
     
-    // More controlled distribution - ensures all 3 varieties appear naturally
-    const varietyIndex = Math.abs(hash % 3);  // Will always be 0, 1, or 2
+    // ===== VARIETY SELECTION =====
+    // You can force a specific variety for testing by passing forceVariety parameter
+    // Or use the hash to determine variety
+    let varietyIndex;
+    if (forceVariety !== null && forceVariety >= 0 && forceVariety < 3) {
+        varietyIndex = forceVariety;
+    } else {
+        // Use hash but with more controlled distribution
+        // This ensures all 3 varieties appear naturally
+        varietyIndex = Math.abs(hash % 3);
+    }
+    
+    // Quality index - more controlled
     const qualityIndex = Math.abs(Math.floor(hash / 7) % 3);
     
-    // Calculate confidence based on hash consistency
+    // ===== CONFIDENCE =====
     const confidence = 75 + (Math.abs(hash % 20));
     
-    // Performance score calculation based on variety and quality
+    // ===== PERFORMANCE SCORE =====
     let performanceScore = 0;
     if (qualityIndex === 0) {
         // High quality
@@ -99,33 +111,33 @@ function mockCNNClassification(imageDataURL) {
     }
     performanceScore = Math.min(98, Math.max(30, Math.round(performanceScore)));
     
-    // Germination potential
+    // ===== GERMINATION POTENTIAL =====
     const germinationPotential = Math.min(95, Math.max(40, performanceScore - 5 + (Math.abs(hash % 10))));
     
-    // Market value index based on variety
+    // ===== MARKET VALUE INDEX =====
     let marketValueIndex = qualityIndex === 0 ? 90 : (qualityIndex === 1 ? 70 : 50);
     if (varietyIndex === 0) marketValueIndex += 5;  // Waxy premium
     if (varietyIndex === 1) marketValueIndex += 0;  // Sweet standard
     
-    // Detailed traits for your 3 varieties
+    // ===== TRAITS =====
     const traits = {
         "Waxy Corn": "Chewy glutinous texture, high amylopectin starch. Excellent for Asian cuisine, industrial starch, and specialty food products. High market demand in premium segments.",
         "Sweet Corn": "High sugar content, tender kernels, bright yellow color. Ideal for fresh consumption, canning, and frozen food industry. Superior eating quality.",
         "Hybrid Yellow": "High-yielding hybrid variety with excellent kernel uniformity. Balanced starch content, disease resistant, suitable for both processing and animal feed."
     };
     
-    // Visual characteristics for each variety
+    // ===== VISUAL CHARACTERISTICS =====
     const visualTraits = {
         "Waxy Corn": "Pearlescent white to pale yellow kernels, waxy appearance, uniform size",
         "Sweet Corn": "Bright golden-yellow kernels, plump and juicy appearance, slight translucency",
         "Hybrid Yellow": "Deep yellow to orange kernels, uniform shape, robust texture"
     };
     
-    // Disease detection (mock)
+    // ===== DISEASE DETECTION =====
     const diseases = ["None detected", "Minor surface blemishes", "Potential fungal spots", "Insect damage visible"];
     const diseaseIndex = Math.abs(Math.floor(hash / 13) % 4);
     
-    // Quality description based on grade
+    // ===== QUALITY DESCRIPTIONS =====
     const qualityDescriptions = {
         "High Quality": "Superior seed with excellent characteristics. Optimal size, color, and texture. No defects visible.",
         "Moderate Quality": "Good quality seed with minor imperfections. Suitable for most applications.",
@@ -201,6 +213,23 @@ function getQualityCriteria(quality, variety) {
                 ? "• Good for processing\n• Suitable for animal feed\n• Consider for secondary markets"
                 : "⚠ Limited market value\n⚠ Processing only recommended\n⚠ Not suitable for seed saving")
     };
+}
+
+// ===== FOR TESTING: Function to force a specific variety =====
+// You can call this from the browser console to test different varieties
+// Example: forceVariety(0) for Waxy Corn, forceVariety(1) for Sweet Corn, forceVariety(2) for Hybrid Yellow
+let forcedVariety = null;
+
+function forceVariety(index) {
+    if (index >= 0 && index <= 2) {
+        forcedVariety = index;
+        console.log(`✅ Forced variety: ${["Waxy Corn", "Sweet Corn", "Hybrid Yellow"][index]}`);
+        showNotification(`Forced variety: ${["Waxy Corn", "Sweet Corn", "Hybrid Yellow"][index]}`, 'info');
+    } else {
+        forcedVariety = null;
+        console.log('✅ Variety forcing disabled');
+        showNotification('Variety forcing disabled', 'info');
+    }
 }
 
 // Format date for display
