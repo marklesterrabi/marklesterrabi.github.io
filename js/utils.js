@@ -93,27 +93,21 @@ function analyzeImageColor(imageDataURL) {
             // Calculate brightness
             const brightness = (avgR + avgG + avgB) / 3;
             
-            // ===== CORRECTED: PROPER VARIETY DETECTION =====
-            // Waxy Corn: White to pale yellow (high R, high G, high B, very light)
-            // Characteristics: Pearlescent, light color, balanced RGB
-            const isWaxy = avgR > 200 && avgG > 185 && avgB > 150 && 
-                          Math.abs(avgR - avgG) < 30 && Math.abs(avgG - avgB) < 40 &&
-                          brightness > 180;
+            // ===== FIXED: CORRECT VARIETY DETECTION =====
+            // Waxy Corn: White to pale yellow (high R, high G, high B, balanced)
+            const isWaxy = avgR > 190 && avgG > 170 && avgB > 130 && 
+                          Math.abs(avgR - avgG) < 40 && Math.abs(avgG - avgB) < 40;
             
-            // Hybrid Yellow: Deep yellow to orange (high R, medium G, low B)
-            // Characteristics: Rich yellow/orange color, not as bright as sweet corn
-            const isHybrid = avgR > 180 && avgG > 100 && avgB < 120 && 
-                            avgR > avgG && avgG > avgB &&
-                            brightness > 100 && brightness < 180;
+            // Sweet Corn: Bright golden yellow (high R, medium-high G, low B)
+            const isSweet = avgR > 200 && avgG > 150 && avgB < 100 && 
+                           avgR > avgG && avgG > avgB;
             
-            // Sweet Corn: Bright golden yellow (high R, high G, low B, vibrant)
-            // Characteristics: Bright golden color, high saturation
-            const isSweet = avgR > 210 && avgG > 160 && avgB < 100 && 
-                           avgR > avgG && avgG > avgB &&
-                           brightness > 140 && brightness < 200;
+            // Hybrid Yellow: Deep yellow to orange (high R, medium G, low B, but not as bright as sweet)
+            const isHybrid = avgR > 180 && avgG > 120 && avgB < 130 && 
+                            avgR > avgG && avgG > avgB && !isSweet;
             
             // Log the values for debugging
-            console.log('🔍 Color Analysis:', {
+            console.log('Color Analysis:', {
                 r: avgR, g: avgG, b: avgB,
                 brightness: Math.round(brightness),
                 isWaxy: isWaxy,
@@ -121,59 +115,41 @@ function analyzeImageColor(imageDataURL) {
                 isHybrid: isHybrid
             });
             
-            // Determine variety with priority order (most specific first)
+            // Determine variety with priority order
             let detectedVariety = 'Hybrid Yellow'; // Default fallback
             let confidence = 75;
             
             if (isWaxy) {
                 detectedVariety = 'Waxy Corn';
                 confidence = 85 + Math.floor(Math.random() * 10);
-                console.log('✅ Detected: Waxy Corn (white/pale yellow)');
             } else if (isSweet) {
                 detectedVariety = 'Sweet Corn';
                 confidence = 85 + Math.floor(Math.random() * 10);
-                console.log('✅ Detected: Sweet Corn (bright golden yellow)');
             } else if (isHybrid) {
                 detectedVariety = 'Hybrid Yellow';
                 confidence = 80 + Math.floor(Math.random() * 12);
-                console.log('✅ Detected: Hybrid Yellow (deep yellow/orange)');
             } else {
-                // Fallback: use RGB ratios to determine
-                // Check if image has more red and green (yellow-ish)
-                if (avgR > avgG && avgG > avgB) {
-                    // Yellow dominant
-                    if (brightness > 180) {
-                        detectedVariety = 'Waxy Corn';
-                        confidence = 70 + Math.floor(Math.random() * 10);
-                    } else if (brightness > 140) {
-                        detectedVariety = 'Sweet Corn';
-                        confidence = 70 + Math.floor(Math.random() * 15);
+                // Fallback: use brightness to determine
+                if (brightness > 180) {
+                    detectedVariety = 'Waxy Corn';
+                    confidence = 70 + Math.floor(Math.random() * 10);
+                } else if (brightness > 130) {
+                    // Check if more yellow or more orange
+                    if (avgR > avgG && avgG > avgB) {
+                        detectedVariety = avgR > 200 ? 'Sweet Corn' : 'Hybrid Yellow';
                     } else {
                         detectedVariety = 'Hybrid Yellow';
-                        confidence = 65 + Math.floor(Math.random() * 15);
                     }
-                } else if (avgR > 200 && avgG > 180 && avgB > 150) {
-                    // Light/white image
-                    detectedVariety = 'Waxy Corn';
-                    confidence = 75 + Math.floor(Math.random() * 10);
-                } else if (avgR > 180 && avgG > 120 && avgB < 130) {
-                    // Orange/yellow image
-                    detectedVariety = 'Hybrid Yellow';
                     confidence = 70 + Math.floor(Math.random() * 15);
                 } else {
-                    // Dark or unclear image - use brightness
-                    if (brightness > 160) {
-                        detectedVariety = 'Waxy Corn';
-                        confidence = 65 + Math.floor(Math.random() * 10);
-                    } else if (brightness > 120) {
-                        detectedVariety = 'Hybrid Yellow';
-                        confidence = 65 + Math.floor(Math.random() * 15);
+                    // Dark image - try to detect anyway
+                    if (avgR > avgG && avgR > avgB) {
+                        detectedVariety = avgG > 100 ? 'Sweet Corn' : 'Hybrid Yellow';
                     } else {
-                        detectedVariety = 'Sweet Corn';
-                        confidence = 60 + Math.floor(Math.random() * 15);
+                        detectedVariety = 'Waxy Corn';
                     }
+                    confidence = 65 + Math.floor(Math.random() * 15);
                 }
-                console.log(`⚠️ Fallback detected: ${detectedVariety} (brightness: ${Math.round(brightness)})`);
             }
             
             resolve({
@@ -208,7 +184,7 @@ async function mockCNNClassification(imageDataURL, forceVariety = null) {
     
     try {
         colorAnalysis = await analyzeImageColor(imageDataURL);
-        console.log('📊 Color Analysis Result:', colorAnalysis);
+        console.log('Color Analysis Result:', colorAnalysis);
         
         // Map detected variety to index
         const varietyMap = {
@@ -220,10 +196,10 @@ async function mockCNNClassification(imageDataURL, forceVariety = null) {
         if (colorAnalysis && colorAnalysis.detectedVariety) {
             varietyIndex = varietyMap[colorAnalysis.detectedVariety] || 1;
             confidence = colorAnalysis.confidence || 75;
-            console.log(`🎯 Final Detection: ${colorAnalysis.detectedVariety} (confidence: ${confidence}%)`);
+            console.log(`🔍 Detected: ${colorAnalysis.detectedVariety} (confidence: ${confidence}%)`);
         }
     } catch (e) {
-        console.warn('⚠️ Color analysis failed, using fallback', e);
+        console.warn('Color analysis failed, using fallback', e);
         // Fallback: use hash
         let hash = 0;
         if (imageDataURL) {
@@ -253,7 +229,7 @@ function generateResult(variety, imageDataURL, confidence = null) {
     
     // Different varieties have different quality distributions
     if (variety === 'Waxy Corn') {
-        // Waxy Corn: Often good quality
+        // Waxy Corn: Often good quality but can vary
         if (rand < 0.45) qualityIndex = 0;
         else if (rand < 0.80) qualityIndex = 1;
         else qualityIndex = 2;
