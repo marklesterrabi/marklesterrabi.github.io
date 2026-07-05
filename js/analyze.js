@@ -80,6 +80,7 @@ function initUploadTab() {
         fileInput.click();
     });
     
+    // Drag and drop
     uploadZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         uploadZone.classList.add('drag-over');
@@ -96,7 +97,10 @@ function initUploadTab() {
     // Run analysis - Updated for async
     if (runBtn) {
         runBtn.addEventListener('click', async () => {
-            if (!currentImagePreview) return;
+            if (!currentImagePreview) {
+                showNotification('Please upload an image first', 'error');
+                return;
+            }
             
             runBtn.disabled = true;
             runBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Processing...';
@@ -112,15 +116,20 @@ function initUploadTab() {
             const interval = setInterval(() => {
                 progress += 10;
                 const fill = resultsArea.querySelector('.progress-fill');
-                if (fill) fill.style.width = `${progress}%`;
-            }, 100);
+                if (fill) fill.style.width = `${Math.min(progress, 90)}%`;
+            }, 150);
             
             try {
                 // Run the async classification
                 const result = await mockCNNClassification(currentImagePreview);
                 const qualityCriteria = getQualityCriteria(result.quality, result.variety);
                 
-                // Save to history
+                // Complete progress
+                clearInterval(interval);
+                const fill = resultsArea.querySelector('.progress-fill');
+                if (fill) fill.style.width = '100%';
+                
+                // ===== SAVE TO HISTORY =====
                 const currentUser = getCurrentUser();
                 console.log('Current user:', currentUser);
                 
@@ -145,13 +154,15 @@ function initUploadTab() {
                     
                     console.log('✅ Saved to history:', newAnalysis);
                     console.log('Total history items:', history.length);
+                    console.log('Storage key:', historyKey);
                 } else {
                     console.error('❌ No user logged in! Cannot save to history.');
                 }
+                // ============================================
                 
-                clearInterval(interval);
                 const qualityClass = result.quality.toLowerCase().replace(' ', '-');
                 
+                // Display results
                 resultsArea.innerHTML = `
                     <div class="result-card">
                         <div class="result-item-full">
@@ -170,28 +181,34 @@ function initUploadTab() {
                         
                         <div class="quality-criteria ${qualityClass}">
                             <h4><i class="fas fa-clipboard-list"></i> Quality Assessment Criteria</h4>
+                            
                             <div class="criteria-section">
                                 <strong>📊 Quality Summary:</strong>
                                 <p>${qualityCriteria.general}</p>
                             </div>
+                            
                             <div class="criteria-section">
                                 <strong>👁️ Visual Indicators Observed:</strong>
                                 <pre>${qualityCriteria.visual}</pre>
                             </div>
+                            
                             <div class="criteria-section">
                                 <strong>📏 Quality Standards Met:</strong>
                                 <pre>${qualityCriteria.standards}</pre>
                             </div>
+                            
                             <div class="why-explanation">
                                 <strong><i class="fas fa-question-circle"></i> Why ${result.quality}?:</strong><br>
                                 ${qualityCriteria.why}
                             </div>
+                            
                             ${qualityCriteria.varietySpecific ? `
                             <div class="criteria-section">
                                 <strong>🌽 ${result.variety}-Specific Notes:</strong>
                                 <p>${qualityCriteria.varietySpecific}</p>
                             </div>
                             ` : ''}
+                            
                             <div class="recommendations-box ${qualityClass}">
                                 <strong><i class="fas fa-lightbulb"></i> Recommendations:</strong><br>
                                 ${qualityCriteria.recommendations}
@@ -220,13 +237,18 @@ function initUploadTab() {
                 
             } catch (error) {
                 console.error('Analysis error:', error);
+                clearInterval(interval);
                 resultsArea.innerHTML = `
-                    <div class="error-result">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Error analyzing image. Please try again.</p>
+                    <div class="error-result" style="text-align: center; padding: 2rem;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #e74c3c; margin-bottom: 1rem;"></i>
+                        <p style="color: #e74c3c; font-weight: 600;">Error analyzing image</p>
+                        <p style="color: #666;">${error.message || 'Please try again with a different image.'}</p>
+                        <button class="btn-outline" style="margin-top: 1rem;" onclick="location.reload()">
+                            <i class="fas fa-sync-alt"></i> Try Again
+                        </button>
                     </div>
                 `;
-                showNotification('Error analyzing image', 'error');
+                showNotification('Error analyzing image. Please try again.', 'error');
             }
             
             runBtn.disabled = false;
@@ -235,7 +257,6 @@ function initUploadTab() {
     }
 }
 
-// [Rest of the batch functions remain the same...]
 function initBatchTab() {
     const batchZone = document.getElementById('batchZone');
     const batchInput = document.getElementById('batchInput');
@@ -305,14 +326,24 @@ function initBatchTab() {
         if (e.target.files.length) addToBatch(e.target.files);
     });
     
+    // Process batch - Updated for async
     if (processBtn) {
         processBtn.addEventListener('click', async () => {
+            if (batchQueue.length === 0) {
+                showNotification('No images in batch queue', 'error');
+                return;
+            }
+            
             const progressDiv = document.getElementById('batchProgress');
             const progressFill = progressDiv.querySelector('.progress-fill');
             const progressText = document.getElementById('progressText');
             
             progressDiv.classList.remove('hidden');
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Processing...';
+            
             const currentUser = getCurrentUser();
+            let completedCount = 0;
             
             for (let i = 0; i < batchQueue.length; i++) {
                 const item = batchQueue[i];
@@ -320,39 +351,64 @@ function initBatchTab() {
                 progressFill.style.width = `${progress}%`;
                 progressText.textContent = `${i + 1}/${batchQueue.length}`;
                 
-                await new Promise(resolve => setTimeout(resolve, 800));
-                item.result = await mockCNNClassification(item.preview);
-                
-                if (currentUser && currentUser.username && item.result) {
-                    const historyKey = `history_${currentUser.username}`;
-                    let existingHistory = localStorage.getItem(historyKey);
-                    let history = existingHistory ? JSON.parse(existingHistory) : [];
+                try {
+                    // Process each image
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    item.result = await mockCNNClassification(item.preview);
                     
-                    history.unshift({
-                        variety: item.result.variety,
-                        quality: item.result.quality,
-                        confidence: item.result.confidence,
-                        performanceScore: item.result.performanceScore,
-                        traits: item.result.traits,
-                        previewUrl: item.preview,
-                        timestamp: Date.now() - (batchQueue.length - i) * 1000,
-                        date: new Date().toLocaleString()
-                    });
-                    localStorage.setItem(historyKey, JSON.stringify(history));
+                    // Save each result to history
+                    if (currentUser && currentUser.username && item.result) {
+                        const historyKey = `history_${currentUser.username}`;
+                        let existingHistory = localStorage.getItem(historyKey);
+                        let history = existingHistory ? JSON.parse(existingHistory) : [];
+                        
+                        history.unshift({
+                            variety: item.result.variety,
+                            quality: item.result.quality,
+                            confidence: item.result.confidence,
+                            performanceScore: item.result.performanceScore,
+                            traits: item.result.traits,
+                            previewUrl: item.preview,
+                            timestamp: Date.now() - (batchQueue.length - i) * 2000,
+                            date: new Date().toLocaleString()
+                        });
+                        localStorage.setItem(historyKey, JSON.stringify(history));
+                    }
+                    completedCount++;
+                } catch (error) {
+                    console.error(`Error processing item ${i + 1}:`, error);
+                    item.result = {
+                        variety: 'Error',
+                        quality: 'Analysis Failed',
+                        confidence: 0,
+                        performanceScore: 0,
+                        traits: 'Error processing image'
+                    };
                 }
                 
                 updateBatchPreview();
             }
             
-            showNotification(`✅ Batch processing complete! ${batchQueue.length} images saved to history.`, 'success');
+            progressFill.style.width = '100%';
+            progressText.textContent = `Complete! ${completedCount}/${batchQueue.length} processed`;
+            
+            showNotification(`✅ Batch complete! ${completedCount} images analyzed and saved to history.`, 'success');
             
             if (exportBtn) {
                 exportBtn.disabled = false;
                 exportBtn.addEventListener('click', () => {
-                    const results = batchQueue.map(item => item.result).filter(r => r);
-                    exportToCSV(results, `batch_analysis_${Date.now()}.csv`);
+                    const results = batchQueue.map(item => item.result).filter(r => r && r.variety !== 'Error');
+                    if (results.length > 0) {
+                        exportToCSV(results, `batch_analysis_${Date.now()}.csv`);
+                        showNotification(`Exported ${results.length} results`, 'success');
+                    } else {
+                        showNotification('No valid results to export', 'error');
+                    }
                 });
             }
+            
+            processBtn.disabled = false;
+            processBtn.innerHTML = '<i class="fas fa-play"></i> Process All';
         });
     }
 }
