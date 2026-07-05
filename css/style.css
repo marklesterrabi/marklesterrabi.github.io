@@ -1509,3 +1509,191 @@ body.dark-mode .nav-item:hover {
     background: #fadbd8;
     color: #c0392b;
 }
+/* Simplified Result Display Styles */
+.result-item-full {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+}
+
+.result-label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #666;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.result-value-large {
+    font-size: 1.75rem;
+    font-weight: 700;
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    border-radius: 2rem;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.result-value-large.sweet-corn {
+    background: linear-gradient(135deg, #fff8f0, #fff);
+    color: #f39c12;
+    border: 2px solid #f39c12;
+}
+
+.result-value-large.waxy-corn {
+    background: linear-gradient(135deg, #f5f0e8, #fff);
+    color: #b8860b;
+    border: 2px solid #b8860b;
+}
+
+.result-value-large.hybrid-yellow {
+    background: linear-gradient(135deg, #fff3e0, #fff);
+    color: #d4a017;
+    border: 2px solid #d4a017;
+}
+
+.result-value-large.quality-high-quality {
+    background: linear-gradient(135deg, #e8f5e9, #fff);
+    color: #2e7d32;
+    border: 2px solid #4caf50;
+}
+
+.result-value-large.quality-moderate-quality {
+    background: linear-gradient(135deg, #fff8e1, #fff);
+    color: #f57c00;
+    border: 2px solid #ff9800;
+}
+
+.result-value-large.quality-low-quality {
+    background: linear-gradient(135deg, #ffebee, #fff);
+    color: #c62828;
+    border: 2px solid #f44336;
+}
+
+/* Quality Criteria Section - Enhanced */
+.quality-criteria {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    border-left: 4px solid;
+}
+
+.quality-criteria.high {
+    border-left-color: #4caf50;
+    background: linear-gradient(135deg, #f1f8f1, #fafafa);
+}
+
+.quality-criteria.moderate {
+    border-left-color: #ff9800;
+    background: linear-gradient(135deg, #fff8f0, #fafafa);
+}
+
+.quality-criteria.low {
+    border-left-color: #f44336;
+    background: linear-gradient(135deg, #fff5f5, #fafafa);
+}
+
+.quality-criteria h4 {
+    margin-bottom: 1rem;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.quality-criteria .criteria-section {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.quality-criteria .criteria-section:last-child {
+    border-bottom: none;
+}
+
+.quality-criteria .criteria-section strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.quality-criteria .criteria-section p, 
+.quality-criteria .criteria-section pre {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    font-family: inherit;
+    color: #444;
+}
+
+.why-explanation {
+    background: rgba(0,0,0,0.03);
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    margin: 0.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.recommendations-box {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+}
+
+.recommendations-box.high {
+    background: #e8f5e9;
+    border-left: 3px solid #4caf50;
+}
+
+.recommendations-box.moderate {
+    background: #fff3e0;
+    border-left: 3px solid #ff9800;
+}
+
+.recommendations-box.low {
+    background: #ffebee;
+    border-left: 3px solid #f44336;
+}
+
+/* Result Card */
+.result-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+}
+
+/* Remove old result grid styles */
+.result-grid {
+    display: none;
+}
+
+/* Keep only what we need */
+.result-actions {
+    text-align: center;
+}
+
+.result-actions .btn-outline {
+    min-width: 200px;
+}
+
+/* Placeholder results */
+.placeholder-results {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+}
+
+.placeholder-results i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #ccc;
+}
