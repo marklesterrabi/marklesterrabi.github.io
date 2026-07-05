@@ -1,4 +1,4 @@
-// Analyze Page JavaScript
+// Analyze Page JavaScript - Updated for async analysis
 
 let currentImageFile = null;
 let currentImagePreview = null;
@@ -93,9 +93,9 @@ function initUploadTab() {
         if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
     });
     
-    // Run analysis
+    // Run analysis - Updated for async
     if (runBtn) {
-        runBtn.addEventListener('click', () => {
+        runBtn.addEventListener('click', async () => {
             if (!currentImagePreview) return;
             
             runBtn.disabled = true;
@@ -103,7 +103,7 @@ function initUploadTab() {
             resultsArea.innerHTML = `
                 <div class="analysis-loading">
                     <i class="fas fa-brain"></i>
-                    <p>CNN Model analyzing image...</p>
+                    <p>Analyzing image...</p>
                     <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
                 </div>
             `;
@@ -115,12 +115,12 @@ function initUploadTab() {
                 if (fill) fill.style.width = `${progress}%`;
             }, 100);
             
-            setTimeout(() => {
-                clearInterval(interval);
-                const result = mockCNNClassification(currentImagePreview);
+            try {
+                // Run the async classification
+                const result = await mockCNNClassification(currentImagePreview);
                 const qualityCriteria = getQualityCriteria(result.quality, result.variety);
                 
-                // ============ SAVE TO HISTORY ============
+                // Save to history
                 const currentUser = getCurrentUser();
                 console.log('Current user:', currentUser);
                 
@@ -145,12 +145,11 @@ function initUploadTab() {
                     
                     console.log('✅ Saved to history:', newAnalysis);
                     console.log('Total history items:', history.length);
-                    console.log('Storage key:', historyKey);
                 } else {
                     console.error('❌ No user logged in! Cannot save to history.');
                 }
-                // ============================================
                 
+                clearInterval(interval);
                 const qualityClass = result.quality.toLowerCase().replace(' ', '-');
                 
                 resultsArea.innerHTML = `
@@ -210,9 +209,6 @@ function initUploadTab() {
                     </div>
                 `;
                 
-                runBtn.disabled = false;
-                runBtn.innerHTML = '<i class="fas fa-brain"></i> Run CNN Classification';
-                
                 const viewHistoryBtn = resultsArea.querySelector('.view-history-btn');
                 if (viewHistoryBtn) {
                     viewHistoryBtn.addEventListener('click', () => {
@@ -222,11 +218,24 @@ function initUploadTab() {
                 
                 showNotification('✅ Analysis completed and saved to history!', 'success');
                 
-            }, 2000);
+            } catch (error) {
+                console.error('Analysis error:', error);
+                resultsArea.innerHTML = `
+                    <div class="error-result">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Error analyzing image. Please try again.</p>
+                    </div>
+                `;
+                showNotification('Error analyzing image', 'error');
+            }
+            
+            runBtn.disabled = false;
+            runBtn.innerHTML = '<i class="fas fa-brain"></i> Run CNN Classification';
         });
     }
 }
 
+// [Rest of the batch functions remain the same...]
 function initBatchTab() {
     const batchZone = document.getElementById('batchZone');
     const batchInput = document.getElementById('batchInput');
@@ -312,7 +321,7 @@ function initBatchTab() {
                 progressText.textContent = `${i + 1}/${batchQueue.length}`;
                 
                 await new Promise(resolve => setTimeout(resolve, 800));
-                item.result = mockCNNClassification(item.preview);
+                item.result = await mockCNNClassification(item.preview);
                 
                 if (currentUser && currentUser.username && item.result) {
                     const historyKey = `history_${currentUser.username}`;
