@@ -126,7 +126,7 @@ function extractImageFeatures(imageDataURL) {
 }
 
 // ================================================
-// IMPROVED VARIETY DETECTION - COLOR PRIORITY
+// IMPROVED VARIETY DETECTION - SPECIFIC COLORS
 // ================================================
 
 function determineVariety(features) {
@@ -134,7 +134,6 @@ function determineVariety(features) {
     const colorR = features.colorR;
     const colorG = features.colorG;
     const colorB = features.colorB;
-    const textureScore = features.textureScore;
     const translucency = features.translucency;
     const patternDensity = features.patternDensity;
     const smoothness = features.smoothness;
@@ -144,45 +143,52 @@ function determineVariety(features) {
     // ================================================
     
     // Calculate color characteristics
-    const isLightColor = (colorR > 200 && colorG > 190 && colorB > 180);
-    const isWhiteColor = (colorR > 210 && colorG > 200 && colorB > 190);
-    const isYellowColor = (colorR > 200 && colorG > 150 && colorB < 120);
-    const isGoldenColor = (colorR > 180 && colorG > 160 && colorB > 80 && colorB < 150);
-    const isOrangeColor = (colorR > 200 && colorG > 130 && colorB < 100);
+    // WAXY: White to pale white/cream (high R, high G, high B - all close to each other)
+    const isWaxyWhite = (colorR > 200 && colorG > 190 && colorB > 180);
+    const isWaxyPale = (colorR > 180 && colorG > 170 && colorB > 160);
+    const isWaxyCream = (colorR > 190 && colorG > 180 && colorB > 150 && colorR < 220);
     
-    // Calculate color variance
+    // SWEET: Yellow to golden yellow (high R, high G, low B)
+    const isSweetYellow = (colorR > 200 && colorG > 150 && colorB < 120);
+    const isSweetGolden = (colorR > 180 && colorG > 140 && colorB < 100);
+    const isSweetBright = (colorR > 190 && colorG > 160 && colorB > 60 && colorB < 130);
+    
+    // HYBRID: Orange to reddish-orange (high R, medium G, low to medium B)
+    const isHybridOrange = (colorR > 200 && colorG > 100 && colorG < 170 && colorB < 100);
+    const isHybridRedOrange = (colorR > 190 && colorG > 80 && colorG < 150 && colorB < 90);
+    const isHybridDeepOrange = (colorR > 180 && colorG > 90 && colorG < 160 && colorB > 40 && colorB < 100);
+    
+    // Calculate color variance (how different the colors are from each other)
     const colorVariance = Math.abs(colorR - colorG) + Math.abs(colorG - colorB) + Math.abs(colorR - colorB);
     
     // ================================================
-    // WAXY CORN DETECTION (WHITE/PALE COLOR)
+    // WAXY CORN DETECTION (WHITE TO PALE WHITE/CREAM)
     // ================================================
     
     let waxyScore = 0;
     
-    // PRIMARY: Color-based detection for Waxy Corn
-    // Waxy Corn is characterized by white to pale yellow/cream color
-    if (isWhiteColor || isLightColor) {
-        waxyScore += 40;  // Strong weight for white/light color
+    // PRIMARY: White to pale white detection
+    if (isWaxyWhite) {
+        waxyScore += 50;  // Strongest weight for pure white
+    } else if (isWaxyPale) {
+        waxyScore += 40;  // Strong weight for pale
+    } else if (isWaxyCream) {
+        waxyScore += 30;  // Good weight for cream
     }
     
-    // Waxy Corn has pale/cream color (high R, high G, high B)
-    if (colorR > 190 && colorG > 180 && colorB > 170) {
-        waxyScore += 25;
-    }
-    
-    // Waxy Corn has low color saturation (colors are close to each other)
+    // Waxy Corn has very low color saturation (colors are very close)
     if (colorVariance < 50) {
-        waxyScore += 20;
+        waxyScore += 25;
     }
     
     // Waxy Corn is translucent/pearlescent
     if (translucency > 0.5) {
-        waxyScore += 15;
+        waxyScore += 20;
     }
     
     // Waxy Corn has smooth texture
     if (smoothness > 0.6) {
-        waxyScore += 10;
+        waxyScore += 15;
     }
     
     // Waxy Corn has uniform appearance
@@ -191,22 +197,26 @@ function determineVariety(features) {
     }
     
     // ================================================
-    // SWEET CORN DETECTION (GOLDEN/YELLOW)
+    // SWEET CORN DETECTION (YELLOW TO GOLDEN YELLOW)
     // ================================================
     
     let sweetScore = 0;
     
-    // PRIMARY: Sweet Corn is characterized by bright golden-yellow color
-    if (isYellowColor || isGoldenColor) {
-        sweetScore += 35;
+    // PRIMARY: Yellow to golden yellow detection
+    if (isSweetYellow) {
+        sweetScore += 45;  // Strongest weight for yellow
+    } else if (isSweetGolden) {
+        sweetScore += 40;  // Strong weight for golden
+    } else if (isSweetBright) {
+        sweetScore += 30;  // Good weight for bright yellow
     }
     
-    // Sweet Corn has high R, high G, low B (golden)
-    if (colorR > 190 && colorG > 140 && colorB < 130) {
-        sweetScore += 25;
+    // Sweet Corn has high R, high G, low B (yellow characteristics)
+    if (colorR > 180 && colorG > 130 && colorB < 130) {
+        sweetScore += 20;
     }
     
-    // Sweet Corn has vibrant color with some saturation
+    // Sweet Corn has moderate color saturation
     if (colorVariance > 50 && colorVariance < 150) {
         sweetScore += 15;
     }
@@ -222,23 +232,27 @@ function determineVariety(features) {
     }
     
     // ================================================
-    // HYBRID YELLOW DETECTION (DEEP YELLOW/ORANGE)
+    // HYBRID YELLOW DETECTION (ORANGE TO REDDISH-ORANGE)
     // ================================================
     
     let hybridScore = 0;
     
-    // PRIMARY: Hybrid Yellow is characterized by deep yellow/orange color
-    if (isOrangeColor || (colorR > 170 && colorG > 140 && colorB > 60 && colorB < 130)) {
-        hybridScore += 30;
+    // PRIMARY: Orange to reddish-orange detection
+    if (isHybridOrange) {
+        hybridScore += 45;  // Strongest weight for orange
+    } else if (isHybridRedOrange) {
+        hybridScore += 40;  // Strong weight for reddish-orange
+    } else if (isHybridDeepOrange) {
+        hybridScore += 35;  // Good weight for deep orange
     }
     
-    // Hybrid Yellow has high R, high G, medium B (deep yellow)
-    if (colorR > 170 && colorG > 140 && colorB > 60 && colorB < 130) {
-        hybridScore += 25;
+    // Hybrid Yellow has high R, medium G, low to medium B (orange/red-orange characteristics)
+    if (colorR > 180 && colorG > 80 && colorG < 170 && colorB < 110) {
+        hybridScore += 20;
     }
     
     // Hybrid Yellow has moderate color variation
-    if (colorVariance > 30 && colorVariance < 120) {
+    if (colorVariance > 40 && colorVariance < 130) {
         hybridScore += 15;
     }
     
@@ -256,19 +270,26 @@ function determineVariety(features) {
     // LOGIC TO PREVENT FALSE POSITIVES
     // ================================================
     
-    // If the image is clearly white/light, it MUST be Waxy Corn
-    if (isWhiteColor || (colorR > 210 && colorG > 200 && colorB > 190)) {
+    // If the image is clearly white/pale, it MUST be Waxy Corn
+    if (isWaxyWhite || isWaxyPale) {
         waxyScore += 30; // Boost Waxy score to ensure it wins
+        // Penalize other varieties for white images
+        sweetScore -= 20;
+        hybridScore -= 20;
     }
     
-    // If the image is clearly golden/yellow, it's likely Sweet Corn
-    if (isYellowColor && colorR > 200 && colorG > 160 && colorB < 120) {
-        sweetScore += 15;
+    // If the image is clearly yellow/golden, it's Sweet Corn
+    if (isSweetYellow || isSweetGolden) {
+        sweetScore += 20;
+        hybridScore -= 15;
+        waxyScore -= 10;
     }
     
-    // If the image is clearly deep yellow/orange, it's likely Hybrid Yellow
-    if (isOrangeColor && colorR > 180 && colorG > 140 && colorB > 70 && colorB < 130) {
-        hybridScore += 15;
+    // If the image is clearly orange/red-orange, it's Hybrid Yellow
+    if (isHybridOrange || isHybridRedOrange) {
+        hybridScore += 20;
+        sweetScore -= 15;
+        waxyScore -= 10;
     }
     
     // ================================================
@@ -288,18 +309,25 @@ function determineVariety(features) {
     }
     
     // ================================================
-    // SAFETY CHECK - Prevent misclassification of white images
+    // SAFETY CHECKS - Prevent misclassification
     // ================================================
     
-    // If all scores are very close and the image is white, force Waxy Corn
-    const scoreDiff = Math.max(waxyScore, sweetScore, hybridScore) - Math.min(waxyScore, sweetScore, hybridScore);
-    if (scoreDiff < 20 && (isWhiteColor || isLightColor)) {
+    // White images MUST be Waxy Corn (override everything else)
+    if (isWaxyWhite && (colorR > 210 && colorG > 200 && colorB > 190)) {
         variety = 'Waxy Corn';
     }
     
-    // If all scores are low, default to Waxy Corn if image is light
-    if (maxScore < 30 && (isWhiteColor || isLightColor)) {
-        variety = 'Waxy Corn';
+    // If scores are very close and image has clear color signature, use color to decide
+    const scoreDiff = Math.max(waxyScore, sweetScore, hybridScore) - Math.min(waxyScore, sweetScore, hybridScore);
+    if (scoreDiff < 30) {
+        // Use color to break ties
+        if (isWaxyWhite || isWaxyPale) {
+            variety = 'Waxy Corn';
+        } else if (isSweetYellow || isSweetGolden) {
+            variety = 'Sweet Corn';
+        } else if (isHybridOrange || isHybridRedOrange) {
+            variety = 'Hybrid Yellow';
+        }
     }
     
     return variety;
@@ -388,9 +416,9 @@ function getVarietyTraits(variety) {
 
 function getVisualTraits(variety) {
     const visualTraits = {
-        "Waxy Corn": "Pearlescent white to pale yellow kernels, waxy appearance, uniform size, translucent when fresh",
-        "Sweet Corn": "Bright golden-yellow kernels, plump and juicy appearance, slight translucency, sweet aroma",
-        "Hybrid Yellow": "Deep yellow to orange kernels, uniform shape, robust texture, dense kernel fill"
+        "Waxy Corn": "White to pale white/cream kernels, waxy pearlescent appearance, uniform size, translucent when fresh",
+        "Sweet Corn": "Yellow to golden yellow kernels, plump and juicy appearance, slight translucency, sweet aroma",
+        "Hybrid Yellow": "Orange to reddish-orange kernels, uniform shape, robust texture, dense kernel fill"
     };
     return visualTraits[variety] || visualTraits["Hybrid Yellow"];
 }
@@ -423,19 +451,19 @@ function getQualityCriteria(quality, variety) {
     
     const varietyComments = {
         "Waxy Corn": {
-            "High Quality": "Excellent pearlescent appearance with ideal waxy texture characteristics.",
+            "High Quality": "Excellent pearlescent white appearance with ideal waxy texture characteristics.",
             "Moderate Quality": "Acceptable waxy characteristics with minor variations in translucency.",
             "Low Quality": "Compromised waxy starch properties visible through kernel abnormalities."
         },
         "Sweet Corn": {
-            "High Quality": "Superior sugar development indicated by bright, uniform golden color.",
+            "High Quality": "Superior sugar development indicated by bright, uniform golden yellow color.",
             "Moderate Quality": "Good sugar content with slight variations in kernel plumpness.",
             "Low Quality": "Reduced sugar content indicated by dull coloring and kernel shriveling."
         },
         "Hybrid Yellow": {
-            "High Quality": "Excellent hybrid characteristics with robust, uniform kernel development.",
+            "High Quality": "Excellent hybrid characteristics with robust, uniform orange-red kernel development.",
             "Moderate Quality": "Good hybrid traits with minor uniformity variations.",
-            "Low Quality": "Compromised hybrid vigor visible through inconsistent kernel fill."
+            "Low Quality": "Compromised hybrid vigor visible through inconsistent kernel fill and dull color."
         }
     };
     
