@@ -166,66 +166,21 @@
                 </div>
             </div>
 
+            <!-- Criteria Info Tip -->
+            <div class="criteria-info-tip" style="margin-top: 1rem; padding: 0.75rem; background: #e8f5e9; border-radius: 0.5rem; font-size: 0.85rem; color: #2e7d32; display: flex; align-items: center; gap: 0.75rem;">
+                <i class="fas fa-info-circle" style="font-size: 1.25rem;"></i>
+                <span><strong>Quality Assessment Criteria:</strong> The AI evaluates kernel uniformity, color consistency, surface integrity, size variation, and variety-specific characteristics to determine quality grade.</span>
+            </div>
+
             <!-- Quick Tips -->
-            <div class="quick-tips">
+            <div class="quick-tips" style="margin-top: 1rem;">
                 <i class="fas fa-lightbulb"></i>
                 <div>
                     <strong>Pro Tip:</strong> For best accuracy, ensure the seed fills about 70% of the frame and avoid multiple seeds in one image.
                 </div>
-                <button id="showGuideBtn" class="btn-outline" style="margin-top: 1rem;">
-    <i class="fas fa-book-open"></i> View Variety Recognition Guide
-</button>
             </div>
         </main>
     </div>
-
-    <!-- Variety Recognition Guide Modal -->
-<div id="varietyGuideModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-search"></i> Visual Recognition Guide</h3>
-            <button class="close-modal">&times;</button>
-        </div>
-        <div class="modal-body">
-            <h4>How to identify your corn seeds:</h4>
-            <div class="guide-grid">
-                <div class="guide-item">
-                    <strong>🌽 Waxy Corn</strong>
-                    <p>Pearlescent white/pale yellow kernels, waxy appearance, chewy texture</p>
-                </div>
-                <div class="guide-item">
-                    <strong>🌽 Sweet Corn</strong>
-                    <p>Bright golden-yellow, plump kernels, slight translucency, sweet aroma</p>
-                </div>
-                <div class="guide-item">
-                    <strong>🌽 Hybrid Yellow</strong>
-                    <p>Deep yellow/orange, uniform size, robust texture, dense kernel fill</p>
-                </div>
-            </div>
-            <p class="guide-tip"><i class="fas fa-lightbulb"></i> Tip: Place seeds on white background with good lighting for best recognition results!</p>
-        </div>
-    </div>
-</div>
-
-<style>
-.guide-grid {
-    display: grid;
-    gap: 1rem;
-    margin: 1rem 0;
-}
-.guide-item {
-    padding: 1rem;
-    background: var(--light-bg);
-    border-radius: 0.5rem;
-}
-.guide-tip {
-    margin-top: 1rem;
-    padding: 0.75rem;
-    background: #fff3cd;
-    border-radius: 0.5rem;
-    color: #856404;
-}
-</style>
 
     <script src="js/utils.js"></script>
     <script src="js/camera.js"></script>
