@@ -1468,3 +1468,44 @@ body.dark-mode .nav-item:hover {
 .recommendations-box.low {
     background: #ffebee;
 }
+/* Result value status colors */
+.result-value.success {
+    color: #27ae60;
+}
+
+.result-value.warning {
+    color: #e74c3c;
+}
+
+.result-value.sweet-corn {
+    color: #f39c12;
+    font-weight: bold;
+}
+
+.result-value.waxy-corn {
+    color: #b8860b;
+    font-weight: bold;
+}
+
+.result-value.hybrid-yellow {
+    color: #d4a017;
+    font-weight: bold;
+}
+
+.quality-badge.high-quality {
+    background: #d5f5e3;
+    color: #1e8449;
+    padding: 0.25rem 0.75rem;
+    border-radius: 2rem;
+    font-size: 0.85rem;
+}
+
+.quality-badge.moderate-quality {
+    background: #fdebd0;
+    color: #e67e22;
+}
+
+.quality-badge.low-quality {
+    background: #fadbd8;
+    color: #c0392b;
+}
