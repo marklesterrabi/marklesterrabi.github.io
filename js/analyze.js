@@ -11,6 +11,23 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabs();
 });
 
+// Show variety guide modal
+const guideBtn = document.getElementById('showGuideBtn');
+if (guideBtn) {
+    guideBtn.addEventListener('click', () => {
+        const modal = document.getElementById('varietyGuideModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            const closeBtn = modal.querySelector('.close-modal');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    modal.style.display = 'none';
+                });
+            }
+        }
+    });
+}
+
 function initTabs() {
     const tabBtns = document.querySelectorAll('.tab-btn');
     tabBtns.forEach(btn => {
@@ -279,6 +296,7 @@ function initBatchTab() {
             batchQueueDiv.classList.add('hidden');
         }
     }
+    
     
     batchZone.addEventListener('click', () => batchInput.click());
     batchSelectBtn.addEventListener('click', (e) => {
