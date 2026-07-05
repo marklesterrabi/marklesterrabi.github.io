@@ -1391,3 +1391,80 @@ body.dark-mode .nav-item:hover {
     background: linear-gradient(135deg, #d4a017, #b8860b);
     color: white;
 }
+/* Quality Criteria Styles */
+.quality-criteria {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+    border-left: 4px solid;
+}
+
+.quality-criteria.high {
+    border-left-color: #27ae60;
+    background: linear-gradient(135deg, #f0f9f0, #f8f9fa);
+}
+
+.quality-criteria.moderate {
+    border-left-color: #f39c12;
+    background: linear-gradient(135deg, #fff8f0, #f8f9fa);
+}
+
+.quality-criteria.low {
+    border-left-color: #e74c3c;
+    background: linear-gradient(135deg, #fff0f0, #f8f9fa);
+}
+
+.quality-criteria h4 {
+    margin-bottom: 0.75rem;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quality-criteria .criteria-section {
+    margin-bottom: 0.75rem;
+}
+
+.quality-criteria .criteria-section strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.quality-criteria .criteria-section p, 
+.quality-criteria .criteria-section pre {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    font-family: inherit;
+}
+
+.why-explanation {
+    background: rgba(0,0,0,0.03);
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    margin-top: 0.75rem;
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+.recommendations-box {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: #e8f5e9;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+}
+
+.recommendations-box.moderate {
+    background: #fff3e0;
+}
+
+.recommendations-box.low {
+    background: #ffebee;
+}
