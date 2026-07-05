@@ -64,8 +64,8 @@ function analyzeImageColor(imageDataURL) {
             const ctx = canvas.getContext('2d');
             
             // Sample pixels from the image
-            const sampleSize = 100; // Number of pixels to sample
-            const step = Math.floor(Math.min(img.width, img.height) / 10);
+            const sampleSize = 200;
+            const step = Math.max(1, Math.floor(Math.min(img.width, img.height) / 20));
             
             canvas.width = img.width;
             canvas.height = img.height;
@@ -90,40 +90,86 @@ function analyzeImageColor(imageDataURL) {
             const avgG = Math.round(g / sampleCount);
             const avgB = Math.round(b / sampleCount);
             
-            // Calculate brightness and color characteristics
+            // Calculate brightness
             const brightness = (avgR + avgG + avgB) / 3;
-            const isWhite = avgR > 200 && avgG > 180 && avgB > 150;
-            const isYellow = avgR > 200 && avgG > 150 && avgB < 100;
-            const isPaleYellow = avgR > 190 && avgG > 170 && avgB > 120 && avgR < 230;
+            
+            // ===== FIXED: CORRECT VARIETY DETECTION =====
+            // Waxy Corn: White to pale yellow (high R, high G, high B, balanced)
+            const isWaxy = avgR > 190 && avgG > 170 && avgB > 130 && 
+                          Math.abs(avgR - avgG) < 40 && Math.abs(avgG - avgB) < 40;
+            
+            // Sweet Corn: Bright golden yellow (high R, medium-high G, low B)
+            const isSweet = avgR > 200 && avgG > 150 && avgB < 100 && 
+                           avgR > avgG && avgG > avgB;
+            
+            // Hybrid Yellow: Deep yellow to orange (high R, medium G, low B, but not as bright as sweet)
+            const isHybrid = avgR > 180 && avgG > 120 && avgB < 130 && 
+                            avgR > avgG && avgG > avgB && !isSweet;
+            
+            // Log the values for debugging
+            console.log('Color Analysis:', {
+                r: avgR, g: avgG, b: avgB,
+                brightness: Math.round(brightness),
+                isWaxy: isWaxy,
+                isSweet: isSweet,
+                isHybrid: isHybrid
+            });
+            
+            // Determine variety with priority order
+            let detectedVariety = 'Hybrid Yellow'; // Default fallback
+            let confidence = 75;
+            
+            if (isWaxy) {
+                detectedVariety = 'Waxy Corn';
+                confidence = 85 + Math.floor(Math.random() * 10);
+            } else if (isSweet) {
+                detectedVariety = 'Sweet Corn';
+                confidence = 85 + Math.floor(Math.random() * 10);
+            } else if (isHybrid) {
+                detectedVariety = 'Hybrid Yellow';
+                confidence = 80 + Math.floor(Math.random() * 12);
+            } else {
+                // Fallback: use brightness to determine
+                if (brightness > 180) {
+                    detectedVariety = 'Waxy Corn';
+                    confidence = 70 + Math.floor(Math.random() * 10);
+                } else if (brightness > 130) {
+                    // Check if more yellow or more orange
+                    if (avgR > avgG && avgG > avgB) {
+                        detectedVariety = avgR > 200 ? 'Sweet Corn' : 'Hybrid Yellow';
+                    } else {
+                        detectedVariety = 'Hybrid Yellow';
+                    }
+                    confidence = 70 + Math.floor(Math.random() * 15);
+                } else {
+                    // Dark image - try to detect anyway
+                    if (avgR > avgG && avgR > avgB) {
+                        detectedVariety = avgG > 100 ? 'Sweet Corn' : 'Hybrid Yellow';
+                    } else {
+                        detectedVariety = 'Waxy Corn';
+                    }
+                    confidence = 65 + Math.floor(Math.random() * 15);
+                }
+            }
             
             resolve({
                 r: avgR,
                 g: avgG,
                 b: avgB,
                 brightness: brightness,
-                isWhite: isWhite,
-                isYellow: isYellow,
-                isPaleYellow: isPaleYellow,
-                // Variety detection based on color
-                detectedVariety: isWhite ? 'Waxy Corn' : 
-                               (isPaleYellow ? 'Waxy Corn' : 
-                               (isYellow ? 'Sweet Corn' : 'Hybrid Yellow'))
+                isWaxy: isWaxy,
+                isSweet: isSweet,
+                isHybrid: isHybrid,
+                detectedVariety: detectedVariety,
+                confidence: Math.round(confidence)
             });
         };
         img.src = imageDataURL;
     });
 }
 
-// Mock CNN Classification - Now with actual image analysis!
+// Mock CNN Classification - With actual image analysis
 async function mockCNNClassification(imageDataURL, forceVariety = null) {
-    // First, analyze the actual image
-    let colorAnalysis = null;
-    try {
-        colorAnalysis = await analyzeImageColor(imageDataURL);
-    } catch (e) {
-        console.warn('Color analysis failed, using fallback', e);
-    }
-    
     // If we have a forced variety, use it
     if (forceVariety !== null && forceVariety >= 0 && forceVariety < 3) {
         const varieties = ["Waxy Corn", "Sweet Corn", "Hybrid Yellow"];
@@ -131,33 +177,30 @@ async function mockCNNClassification(imageDataURL, forceVariety = null) {
         return generateResult(varieties[varietyIndex], imageDataURL);
     }
     
-    // Determine variety based on image color analysis
+    // Analyze the actual image
+    let colorAnalysis = null;
     let varietyIndex = 1; // Default to Sweet Corn
-    let confidence = 70;
+    let confidence = 75;
     
-    if (colorAnalysis) {
-        console.log('Color Analysis:', colorAnalysis);
+    try {
+        colorAnalysis = await analyzeImageColor(imageDataURL);
+        console.log('Color Analysis Result:', colorAnalysis);
         
-        // Waxy Corn: White to pale yellow, pearlescent
-        if (colorAnalysis.isWhite || colorAnalysis.isPaleYellow) {
-            varietyIndex = 0; // Waxy Corn
-            confidence = 80 + Math.floor(Math.random() * 15);
-            console.log('🔍 Detected Waxy Corn (white/pale yellow)');
+        // Map detected variety to index
+        const varietyMap = {
+            'Waxy Corn': 0,
+            'Sweet Corn': 1,
+            'Hybrid Yellow': 2
+        };
+        
+        if (colorAnalysis && colorAnalysis.detectedVariety) {
+            varietyIndex = varietyMap[colorAnalysis.detectedVariety] || 1;
+            confidence = colorAnalysis.confidence || 75;
+            console.log(`🔍 Detected: ${colorAnalysis.detectedVariety} (confidence: ${confidence}%)`);
         }
-        // Sweet Corn: Bright golden yellow
-        else if (colorAnalysis.isYellow) {
-            varietyIndex = 1; // Sweet Corn
-            confidence = 85 + Math.floor(Math.random() * 10);
-            console.log('🔍 Detected Sweet Corn (golden yellow)');
-        }
-        // Hybrid Yellow: Deep yellow to orange
-        else {
-            varietyIndex = 2; // Hybrid Yellow
-            confidence = 78 + Math.floor(Math.random() * 15);
-            console.log('🔍 Detected Hybrid Yellow (deep yellow/orange)');
-        }
-    } else {
-        // Fallback: use hash if color analysis failed
+    } catch (e) {
+        console.warn('Color analysis failed, using fallback', e);
+        // Fallback: use hash
         let hash = 0;
         if (imageDataURL) {
             for (let i = 0; i < Math.min(imageDataURL.length, 1000); i++) {
@@ -168,7 +211,7 @@ async function mockCNNClassification(imageDataURL, forceVariety = null) {
             hash = Date.now();
         }
         varietyIndex = Math.abs(hash % 3);
-        console.log('⚠️ Using fallback hash-based variety detection');
+        confidence = 70 + Math.abs(hash % 20);
     }
     
     const varieties = ["Waxy Corn", "Sweet Corn", "Hybrid Yellow"];
@@ -180,16 +223,26 @@ function generateResult(variety, imageDataURL, confidence = null) {
     // Determine quality based on variety and some randomness
     const qualities = ["High Quality", "Moderate Quality", "Low Quality"];
     
-    // Simulate quality based on variety (with some randomness)
+    // Simulate quality with weighted randomness
+    let rand = Math.random();
     let qualityIndex;
-    const rand = Math.random();
-    if (rand < 0.4) qualityIndex = 0; // High Quality
-    else if (rand < 0.75) qualityIndex = 1; // Moderate Quality
-    else qualityIndex = 2; // Low Quality
     
-    // Adjust quality for variety (give slightly better scores to Sweet Corn)
-    if (variety === 'Sweet Corn' && qualityIndex > 0 && Math.random() < 0.3) {
-        qualityIndex = 0; // Sometimes upgrade Sweet Corn
+    // Different varieties have different quality distributions
+    if (variety === 'Waxy Corn') {
+        // Waxy Corn: Often good quality but can vary
+        if (rand < 0.45) qualityIndex = 0;
+        else if (rand < 0.80) qualityIndex = 1;
+        else qualityIndex = 2;
+    } else if (variety === 'Sweet Corn') {
+        // Sweet Corn: Usually good quality
+        if (rand < 0.50) qualityIndex = 0;
+        else if (rand < 0.85) qualityIndex = 1;
+        else qualityIndex = 2;
+    } else {
+        // Hybrid Yellow: More variable
+        if (rand < 0.35) qualityIndex = 0;
+        else if (rand < 0.70) qualityIndex = 1;
+        else qualityIndex = 2;
     }
     
     // Calculate confidence if not provided
@@ -216,9 +269,9 @@ function generateResult(variety, imageDataURL, confidence = null) {
     
     // Traits for each variety
     const traits = {
-        "Waxy Corn": "Chewy glutinous texture, high amylopectin starch. Excellent for Asian cuisine, industrial starch, and specialty food products.",
-        "Sweet Corn": "High sugar content, tender kernels, bright yellow color. Ideal for fresh consumption, canning, and frozen food industry.",
-        "Hybrid Yellow": "High-yielding hybrid variety with excellent kernel uniformity. Balanced starch content, disease resistant."
+        "Waxy Corn": "Chewy glutinous texture, high amylopectin starch. Excellent for Asian cuisine, industrial starch, and specialty food products. High market demand in premium segments.",
+        "Sweet Corn": "High sugar content, tender kernels, bright yellow color. Ideal for fresh consumption, canning, and frozen food industry. Superior eating quality.",
+        "Hybrid Yellow": "High-yielding hybrid variety with excellent kernel uniformity. Balanced starch content, disease resistant, suitable for both processing and animal feed."
     };
     
     // Visual characteristics
@@ -234,9 +287,9 @@ function generateResult(variety, imageDataURL, confidence = null) {
     
     // Quality descriptions
     const qualityDescriptions = {
-        "High Quality": "Superior seed with excellent characteristics. Optimal size, color, and texture.",
-        "Moderate Quality": "Good quality seed with minor imperfections.",
-        "Low Quality": "Significant defects present. Limited applications."
+        "High Quality": "Superior seed with excellent characteristics. Optimal size, color, and texture. No defects visible.",
+        "Moderate Quality": "Good quality seed with minor imperfections. Suitable for most applications.",
+        "Low Quality": "Significant defects present. Limited applications. Consider for processing only."
     };
     
     return {
