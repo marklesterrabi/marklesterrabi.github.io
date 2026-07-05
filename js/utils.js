@@ -41,6 +41,8 @@ function logout() {
     window.location.href = 'login.html';
 }
 
+// Replace the mockCNNClassification function with this updated version:
+
 function mockCNNClassification(imageDataURL) {
     // Simulate AI processing with consistent results based on image data
     let hash = 0;
