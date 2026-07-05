@@ -135,103 +135,150 @@ function initUploadTab() {
                 if (fill) fill.style.width = `${progress}%`;
             }, 100);
             
-            setTimeout(() => {
-                clearInterval(interval);
-                const result = mockCNNClassification(currentImagePreview);
-                
-                // Save to history
-                const user = getCurrentUser();
-                if (user) {
-                    const history = Storage.get(`history_${user.username}`) || [];
-                    history.unshift({
-                        ...result,
-                        previewUrl: currentImagePreview,
-                        timestamp: Date.now()
-                    });
-                    Storage.set(`history_${user.username}`, history.slice(0, 100));
-                }
-                
-                // Display results
-                resultsArea.innerHTML = `
-                    <div class="result-card">
-                        <div class="result-header">
-                            <h3>Analysis Complete</h3>
-                            <span class="confidence-badge">Confidence: ${result.confidence}%</span>
-                        </div>
-                        <div class="result-grid">
-                            <div class="result-item">
-                                <label>Variety</label>
-                                <div class="result-value ${result.variety.toLowerCase().replace(' ', '-')}">
-                                    ${result.variety}
-                                </div>
-                            </div>
-                            <div class="result-item">
-                                <label>Quality Grade</label>
-                                <div class="result-value quality-${result.quality.toLowerCase().replace(' ', '-')}">
-                                    ${result.quality}
-                                </div>
-                            </div>
-                            <div class="result-item">
-                                <label>Performance Score</label>
-                                <div class="result-value">${result.performanceScore}/100</div>
-                                <div class="performance-bar">
-                                    <div class="performance-fill" style="width: ${result.performanceScore}%"></div>
-                                </div>
-                            </div>
-                            <div class="result-item">
-                                <label>Germination Potential</label>
-                                <div class="result-value">${result.germinationPotential}%</div>
-                            </div>
-                            <div class="result-item">
-                                <label>Market Value Index</label>
-                                <div class="result-value">${result.marketValueIndex}/100</div>
-                            </div>
-                            <div class="result-item">
-                                <label>Disease Detection</label>
-                                <div class="result-value ${result.diseaseDetection !== 'None detected' ? 'warning' : 'success'}">
-                                    ${result.diseaseDetection}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="result-traits">
-                            <strong>Key Traits:</strong>
-                            <p>${result.traits}</p>
-                        </div>
-                        <div class="result-actions">
-                            <button class="btn-outline save-result" data-result='${JSON.stringify(result)}'>
-                                <i class="fas fa-save"></i> Save to Collection
-                            </button>
-                            <button class="btn-outline export-result">
-                                <i class="fas fa-download"></i> Export Report
-                            </button>
-                        </div>
-                        <div class="qr-code" id="qrCode"></div>
+// Inside the runAnalysisBtn click handler, replace the resultsArea.innerHTML section
+// Look for this part and update it:
+
+setTimeout(() => {
+    clearInterval(interval);
+    const result = mockCNNClassification(currentImagePreview);
+    
+    // Get quality criteria
+    const qualityCriteria = getQualityCriteria(result.quality, result.variety);
+    
+    // Save to history
+    const user = getCurrentUser();
+    if (user) {
+        const history = Storage.get(`history_${user.username}`) || [];
+        history.unshift({
+            ...result,
+            previewUrl: currentImagePreview,
+            timestamp: Date.now()
+        });
+        Storage.set(`history_${user.username}`, history.slice(0, 100));
+    }
+    
+    // Determine quality class for styling
+    const qualityClass = result.quality.toLowerCase().replace(' ', '-');
+    
+    // Display results with quality criteria
+    resultsArea.innerHTML = `
+        <div class="result-card">
+            <div class="result-header">
+                <h3>Analysis Complete</h3>
+                <span class="confidence-badge">Confidence: ${result.confidence}%</span>
+            </div>
+            <div class="result-grid">
+                <div class="result-item">
+                    <label>Variety</label>
+                    <div class="result-value ${result.variety.toLowerCase().replace(' ', '-')}">
+                        ${result.variety}
                     </div>
-                `;
-                
-                runBtn.disabled = false;
-                runBtn.innerHTML = '<i class="fas fa-brain"></i> Run CNN Classification';
-                
-                // Generate QR code
-                const qrContainer = resultsArea.querySelector('#qrCode');
-                if (qrContainer) {
-                    const qrUrl = generateQRCode(JSON.stringify({
-                        variety: result.variety,
-                        quality: result.quality,
-                        performance: result.performanceScore
-                    }));
-                    qrContainer.innerHTML = `<img src="${qrUrl}" alt="QR Code" style="width: 100px;">`;
-                }
-                
-                // Add save handler
-                const saveBtn = resultsArea.querySelector('.save-result');
-                if (saveBtn) {
-                    saveBtn.addEventListener('click', () => {
-                        showNotification('Analysis saved to collection!', 'success');
-                    });
-                }
-                
-            }, 2000);
+                </div>
+                <div class="result-item">
+                    <label>Quality Grade</label>
+                    <div class="result-value quality-${qualityClass}">
+                        ${result.quality}
+                    </div>
+                </div>
+                <div class="result-item">
+                    <label>Performance Score</label>
+                    <div class="result-value">${result.performanceScore}/100</div>
+                    <div class="performance-bar">
+                        <div class="performance-fill" style="width: ${result.performanceScore}%"></div>
+                    </div>
+                </div>
+                <div class="result-item">
+                    <label>Germination Potential</label>
+                    <div class="result-value">${result.germinationPotential}%</div>
+                </div>
+                <div class="result-item">
+                    <label>Market Value Index</label>
+                    <div class="result-value">${result.marketValueIndex}/100</div>
+                </div>
+                <div class="result-item">
+                    <label>Disease Detection</label>
+                    <div class="result-value ${result.diseaseDetection !== 'None detected' ? 'warning' : 'success'}">
+                        ${result.diseaseDetection}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quality Criteria Section -->
+            <div class="quality-criteria ${qualityClass}">
+                <h4><i class="fas fa-clipboard-list"></i> Quality Assessment Criteria</h4>
+                <div class="criteria-section">
+                    <strong>📊 Quality Summary:</strong>
+                    <p>${qualityCriteria.general}</p>
+                </div>
+                <div class="criteria-section">
+                    <strong>👁️ Visual Indicators Observed:</strong>
+                    <pre>${qualityCriteria.visual}</pre>
+                </div>
+                <div class="criteria-section">
+                    <strong>📏 Quality Standards Met:</strong>
+                    <pre>${qualityCriteria.standards}</pre>
+                </div>
+                <div class="why-explanation">
+                    <strong><i class="fas fa-question-circle"></i> Why ${result.quality}?:</strong><br>
+                    ${qualityCriteria.why}
+                </div>
+                ${qualityCriteria.varietySpecific ? `
+                <div class="criteria-section">
+                    <strong>🌽 ${result.variety}-Specific Notes:</strong>
+                    <p>${qualityCriteria.varietySpecific}</p>
+                </div>
+                ` : ''}
+                <div class="recommendations-box ${qualityClass}">
+                    <strong><i class="fas fa-lightbulb"></i> Recommendations:</strong><br>
+                    ${qualityCriteria.recommendations}
+                </div>
+            </div>
+            
+            <div class="result-traits">
+                <strong>Key Traits:</strong>
+                <p>${result.traits}</p>
+            </div>
+            <div class="result-traits">
+                <strong>Visual Characteristics:</strong>
+                <p>${result.visualTraits || 'Standard variety characteristics'}</p>
+            </div>
+            
+            <div class="result-actions">
+                <button class="btn-outline save-result" data-result='${JSON.stringify(result)}'>
+                    <i class="fas fa-save"></i> Save to Collection
+                </button>
+                <button class="btn-outline export-result">
+                    <i class="fas fa-download"></i> Export Report
+                </button>
+            </div>
+            <div class="qr-code" id="qrCode"></div>
+        </div>
+    `;
+    
+    runBtn.disabled = false;
+    runBtn.innerHTML = '<i class="fas fa-brain"></i> Run CNN Classification';
+    
+    // Generate QR code
+    const qrContainer = resultsArea.querySelector('#qrCode');
+    if (qrContainer) {
+        const qrUrl = generateQRCode(JSON.stringify({
+            variety: result.variety,
+            quality: result.quality,
+            qualityCriteria: qualityCriteria.general,
+            performance: result.performanceScore
+        }));
+        qrContainer.innerHTML = `<img src="${qrUrl}" alt="QR Code" style="width: 100px;">`;
+    }
+    
+    // Add save handler
+    const saveBtn = resultsArea.querySelector('.save-result');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            showNotification('Analysis saved to collection!', 'success');
+        });
+    }
+    
+}, 2000);
         });
     }
 }
