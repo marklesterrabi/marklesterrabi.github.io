@@ -137,6 +137,59 @@ function mockCNNClassification(imageDataURL) {
         date: new Date().toLocaleString()
     };
 }
+
+// Quality criteria descriptions based on visual features
+function getQualityCriteria(quality, variety) {
+    const criteria = {
+        "High Quality": {
+            general: "Superior seed characteristics meeting all quality standards",
+            visual: "• Uniform kernel size and shape\n• Vibrant, consistent coloration\n• No visible defects or damage\n• Intact pericarp (seed coat)",
+            standards: "• 90-100% uniformity score\n• Optimal moisture content\n• No disease symptoms\n• Excellent germination potential",
+            why: "This seed exhibits exceptional visual characteristics with perfect uniformity, ideal color development, and zero defects, indicating optimal growing conditions and proper harvest timing."
+        },
+        "Moderate Quality": {
+            general: "Acceptable quality with minor imperfections",
+            visual: "• Slight size or shape variation\n• Minor color inconsistencies\n• Small surface blemishes present\n• Generally intact seed coat",
+            standards: "• 70-89% uniformity score\n• Slightly suboptimal moisture\n• Minor surface irregularities\n• Good germination potential",
+            why: "This seed shows good overall structure but has minor imperfections such as slight size variation or small blemishes, which may result from suboptimal growing conditions or minor mechanical damage during harvest."
+        },
+        "Low Quality": {
+            general: "Significant defects affecting seed value",
+            visual: "• Notable size or shape irregularities\n• Discoloration present\n• Visible cracks or damage\n• Compromised seed coat integrity",
+            standards: "• Below 70% uniformity score\n• Potential moisture issues\n• Visible disease or damage\n• Reduced germination potential",
+            why: "This seed exhibits significant quality issues including visible damage, discoloration, or irregular development, likely due to disease pressure, pest damage, environmental stress, or improper handling/storage."
+        }
+    };
+    
+    // Variety-specific comments
+    const varietyComments = {
+        "Waxy Corn": {
+            "High Quality": "Excellent pearlescent appearance with ideal waxy texture characteristics.",
+            "Moderate Quality": "Acceptable waxy characteristics with minor variations in translucency.",
+            "Low Quality": "Compromised waxy starch properties visible through kernel abnormalities."
+        },
+        "Sweet Corn": {
+            "High Quality": "Superior sugar development indicated by bright, uniform golden color.",
+            "Moderate Quality": "Good sugar content with slight variations in kernel plumpness.",
+            "Low Quality": "Reduced sugar content indicated by dull coloring and kernel shriveling."
+        },
+        "Hybrid Yellow": {
+            "High Quality": "Excellent hybrid characteristics with robust, uniform kernel development.",
+            "Moderate Quality": "Good hybrid traits with minor uniformity variations.",
+            "Low Quality": "Compromised hybrid vigor visible through inconsistent kernel fill."
+        }
+    };
+    
+    return {
+        ...criteria[quality],
+        varietySpecific: varietyComments[variety]?.[quality] || "",
+        recommendations: quality === "High Quality" 
+            ? "✓ Premium market pricing recommended\n✓ Suitable for seed saving\n✓ Ideal for direct consumption"
+            : (quality === "Moderate Quality" 
+                ? "• Good for processing\n• Suitable for animal feed\n• Consider for secondary markets"
+                : "⚠ Limited market value\n⚠ Processing only recommended\n⚠ Not suitable for seed saving")
+    };
+}
 // Format date for display
 function formatDate(timestamp) {
     const date = new Date(timestamp);
